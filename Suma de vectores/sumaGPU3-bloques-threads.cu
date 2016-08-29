@@ -67,8 +67,8 @@ int main()
    cudaEventSynchronize( fin1 ); // Se sincroniza
    cudaEventElapsedTime( &tiempo1, inicio1, fin1 );
 
-   for (int i=0; i<N; i++)
-      printf( "%d + %d = %d\n", a[i], b[i], c[i] );
+  // for (int i=0; i<N; i++)
+   //   printf( "%d + %d = %d\n", a[i], b[i], c[i] );
 
    /* clean up */
 

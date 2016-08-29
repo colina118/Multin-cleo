@@ -42,8 +42,8 @@ int main( void ) {
    cudaEventElapsedTime( &tiempo, inicio, fin );
 
    // display the results
-   for (int i=0; i<N; i++)
-      printf( "%d + %d = %d\n", a[i], b[i], c[i] );
+  // for (int i=0; i<N; i++)
+   //   printf( "%d + %d = %d\n", a[i], b[i], c[i] );
 
    free(a);
    free(b);
