@@ -1,0 +1,1 @@
+nvcc -o image_test rgb_to_grayscale.cu -lopencv_core -lopencv_highgui -lopencv_imgproc
