@@ -92,7 +92,11 @@ float convolucionGPU(int *a, int *b, int *c, int *a1, int d, const Mat& ima, con
    cudaMemcpy( dev_c, c, res.step*res.rows*sizeof(int), cudaMemcpyHostToDevice );
 
    if (d == 1)
-
+   {
+      dim3 bloques( ima.rows/Q, ima.step/Q);
+      dim3 threads( Q, Q);
+      sumaEulerGPU<<<bloques, threads>>>(dev_a, dev_b, dev_c, 3, ima.step, ima.rows);
+   }
    else if (d == 2)
    {
       dim3 bloques( ima.rows/Q, ima.step/Q);
@@ -190,17 +194,36 @@ void inicializar(int *a, int *b, int *c)
 
 void calcular( char o, char p, char d, const Mat& ima, const Mat& res)
 {
-   int *masPxP, *resMxN, *imaMxN, *masPyP;
-   masPxP = (int*) malloc(P*P*sizeof(int));
-   masPxP = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
-   masPyP = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+   int *resMxN, *imaMxN;
+   int *masPxP = (int*) malloc(3*3*sizeof(int));
+   int *masPyP = (int*) malloc(3*3*sizeof(int));
+   masPxP[0] = -1;
+   masPxP[1] = 0;
+   masPxP[2] = 1;
+   masPxP[3] = -2;
+   masPxP[4] = 0;
+   masPxP[5] = 2;
+   masPxP[6] = -1;
+   masPxP[7] = 0;
+   masPxP[8] = 1;
+   masPyP[0] = -1;
+   masPyP[1] = -2;
+   masPyP[2] = -1;
+   masPyP[3] = 0;
+   masPyP[4] = 0;
+   masPyP[5] = 0;
+   masPyP[6] = 1;
+   masPyP[7] = 2;
+   masPyP[8] = 1;
+   //masPxP = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+   //masPyP = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
    imaMxN = (int*) malloc(ima.step*ima.rows*sizeof(int));
    resMxN = (int*) malloc(res.step*res.rows*sizeof(int));
    memcpy(imaMxN, ima.ptr(), ima.step*ima.rows);
    memcpy(resMxN, res.ptr(), res.step*res.rows);
 
 
-   inicializar( masPxP, imaMxN, resMxN );
+   //inicializar( masPxP, imaMxN, resMxN );
    if (p)
    {
       printf("Matrix A (máscara) de %dx%d\n", P, P);
@@ -228,7 +251,7 @@ void calcular( char o, char p, char d, const Mat& ima, const Mat& res)
    }
    else if (o == 1)
    {
-      printf("Tiempo (GPU): %f ms\n", convolucionGPU( masPxP, imaMxN, resMxN, d, ima, res) );
+      printf("Tiempo (GPU): %f ms\n", convolucionGPU( masPxP, imaMxN, resMxN, masPyP, d, ima, res) );
       if (p)
       {
          printf("Matrix A (máscara) de %dx%d\n", M, N);
@@ -239,6 +262,7 @@ void calcular( char o, char p, char d, const Mat& ima, const Mat& res)
          desplegar(resMxN, M, N);
       }
    }
+   
    free( masPxP );
    free( imaMxN );
    free( resMxN );
@@ -269,30 +293,39 @@ int main (int argc, char *argv[] )
       printf("N debe ser valor múltiplo de 256 entre 256 y 1024\n");
       exit(0);
    }
+
   string imagePath;
 
-   if(argc < 2)
-  	imagePath = "space-wallpaper_2880x1800.jpg";
-  else
-  	imagePath = argv[1];
+	imagePath = "space-wallpaper_2880x1800.jpg";
+
 
   //string imagePath = "samurai-girl-pictures_2560x1600.jpg";
   //string imagePath = "women_samurai_2560x1600.jpg";
   //string imagePath = "space-wallpaper_2880x1800.jpg";
 
   //Read input image from the disk
-  Mat input = imread(imagePath, CV_LOAD_IMAGE_GRAYSCASLE);
-  Mat output = imread (imagePath, CV_LOAD_IMAGE_GRAYSCASLE);
+  Mat input = imread(imagePath, CV_LOAD_IMAGE_GRAYSCALE);
+  Mat output = imread (imagePath, CV_LOAD_IMAGE_GRAYSCALE);
   //Mat output(input.rows, input.cols, CV_8UC1);
 
   if (input.empty())
   {
   	cout << "Image Not Found!" << std::endl;
+    cout << imagePath << endl;
   	cin.get();
   	return -1;
   }
 
 
-   calcular( atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), input, output;
+   calcular( atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), input, output);
+
+   namedWindow("Input", WINDOW_NORMAL);
+ 	 namedWindow("Output", WINDOW_NORMAL);
+
+   imshow("Input", input);
+ 	 imshow("Output", output);
+
+   waitKey();
+
    return 1;
 }
