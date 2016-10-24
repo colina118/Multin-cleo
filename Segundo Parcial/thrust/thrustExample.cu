@@ -12,6 +12,7 @@
 void thrust_sequence();
 void sortComparisson();
 void thrustTransform();
+void thrustReduce();
 
 using sys_clock = std::chrono::system_clock;
 
@@ -36,10 +37,55 @@ struct square
   }
 };
 
+struct functor_add
+{
+  int *data;
+  functor_add(int *_data) : data(_data) {}
+
+  template <typename Tuple>
+  __host__ __device__
+  void operator()(Tuple t)
+  {
+    thrust::get<3>(t) = thrust::get<0>(t) + thrust::get<1>(t) + data[thrust::get<2>(t)];
+  }
+};
+
 int main()
 {
-  thrustTransform();
-  /*float x[4] = {1.0, 2.0 ,3.0, 4.0};
+
+  const int size = 5;
+  thrust::device_vector<int> A(size);
+  thrust::device_vector<int> B(size);
+  thrust::device_vector<int> res(size);
+
+  thrust::device_vector<int> ids(size);
+  thrust::device_vector<int> data(size);
+
+  thrust::sequence(data.begin(), data.end());
+  thrust::sequence(A.begin(), A.end(), 10, 10);
+  thrust::sequence(B.begin(), B.end(), 5, 2);
+  thrust::sequence(ids.begin(), ids.end());
+
+  thrust::for_each(
+    thrust::make_zip_iterator(thrust::make_tuple(A.begin(), B.begin(), ids.begin(), res.begin())),
+    thrust::make_zip_iterator(thrust::make_tuple(A.end(), B.end(), ids.end(), res.end())),
+    functor_add(thrust::raw_pointer_cast(data.data()))
+  );
+
+  thrust::host_vector<int> res_h = res;
+
+  for(auto value : res_h)
+  {
+    std::cout << "result = " << value << std::endl;
+  }
+
+
+
+}
+
+void thrustReduce()
+{
+  float x[4] = {1.0, 2.0 ,3.0, 4.0};
 
   thrust::device_vector<float> d_vec(x, x+4);
 
@@ -48,8 +94,7 @@ int main()
 
   float norm = std::sqrt(thrust::transform_reduce(d_vec.begin(), d_vec.end(), unary_op, 0, binary_op));
 
-  std::cout << norm << std::endl;*/
-
+  std::cout << norm << std::endl;
 }
 
 void thrustTransform()
